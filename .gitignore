@@ -14,3 +14,6 @@ Thumbs.db
 .cursorignore
 .cursorignorerules
 .cursorignorerules
+
+*.myarc
+/extracted
