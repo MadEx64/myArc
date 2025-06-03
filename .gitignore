@@ -1,0 +1,16 @@
+# Dependencies
+node_modules/
+dist/
+
+# OS specific files
+.DS_Store
+Thumbs.db
+
+# IDES
+.vscode/
+.idea/
+.cursor/
+.cursorrules
+.cursorignore
+.cursorignorerules
+.cursorignorerules

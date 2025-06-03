@@ -1,0 +1,24 @@
+{
+  "name": "myarc",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.ts",
+  "scripts": {
+    "dev": "ts-node index.ts",
+    "build": "tsc",
+    "test": "test"
+  },
+  "keywords": [
+    "archiver"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^22.13.10",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.2"
+  },
+  "dependencies": {
+    "commander": "^14.0.0"
+  }
+}
