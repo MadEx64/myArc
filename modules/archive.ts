@@ -10,7 +10,7 @@ export async function archive(inputFilePaths: string[], outputArchivePath: strin
     const fileEntryHeaders = await Promise.all(
       inputFilePaths.map(async (filePath) => {
         const stats = await fsPromises.stat(filePath);
-        const fileName = path.basename(filePath);
+        const fileName = path.basename(filePath); // TODO: handle relative paths for directories (not implemented yet)
         if (!fileName) throw new Error(`Invalid file path: ${filePath}`);
         
         return {
@@ -26,45 +26,39 @@ export async function archive(inputFilePaths: string[], outputArchivePath: strin
     const fileHandle = await fsPromises.open(outputArchivePath, 'w');
     
     try {
-      // Write archive header (fixed size: 13 bytes)
       const archiveHeaderBuffer = Buffer.alloc(ARCHIVE_HEADER_SIZE);
-      archiveHeaderBuffer.write(ARCHIVE_MAGIC, 0); // 4 bytes
-      archiveHeaderBuffer.writeUInt8(ARCHIVE_VERSION, 4); // 1 byte
-      archiveHeaderBuffer.writeUInt32LE(inputFilePaths.length, 5); // 4 bytes
+      archiveHeaderBuffer.write(ARCHIVE_MAGIC, 0);
+      archiveHeaderBuffer.writeUInt8(ARCHIVE_VERSION, 5);
+      archiveHeaderBuffer.writeUInt32LE(inputFilePaths.length, 6);
       await fileHandle.write(archiveHeaderBuffer);
 
-      // Write file entry headers (variable size)
-      for (const header of fileEntryHeaders) {
+      for (let i = 0; i < fileEntryHeaders.length; i++) {
+        const header = fileEntryHeaders[i];
+        const filePath = inputFilePaths[i];
+
         const entrySize = 1 + 2 + header.nameLength + 8 + 8;
         const entryBuffer = Buffer.alloc(entrySize);
         
         let offset = 0;
-        entryBuffer.writeUInt8(header.type, offset); // write the type
+        entryBuffer.writeUInt8(header.type, offset);
         offset += 1;
 
-        entryBuffer.writeUInt16LE(header.nameLength, offset); // write the name length
+        entryBuffer.writeUInt16LE(header.nameLength, offset);
         offset += 2;
 
-        entryBuffer.write(header.name, offset, header.nameLength, 'utf-8'); // write the name (encoded in utf-8)
+        entryBuffer.write(header.name, offset, header.nameLength, 'utf-8');
         offset += header.nameLength;
 
-        entryBuffer.writeBigUInt64LE(BigInt(header.size), offset); // write the size
+        entryBuffer.writeBigUInt64LE(BigInt(header.size), offset);
         offset += 8;
         
-        entryBuffer.writeBigUInt64LE(BigInt(header.lastModified), offset); // write the last modified
+        entryBuffer.writeBigUInt64LE(BigInt(header.lastModified), offset);
         
         await fileHandle.write(entryBuffer);
-      }
 
-      // Write file contents
-      for(let i = 0; i < inputFilePaths.length; i++) {
-        const filePath = inputFilePaths[i];
-        const header = fileEntryHeaders[i];
-        if (header.type === 0) {
-          const data = await fsPromises.readFile(filePath);
+        if (header.type === 0 && header.size > 0) {
+          const data = await fsPromises.readFile(filePath); // TODO: optimize this for large files (readStream)
           await fileHandle.write(data);
-        } else {
-          // TODO: handle directories
         }
       }
       
